@@ -4,9 +4,6 @@ local FUR = CreateFrame("Frame")
 local PLAYER_LEVEL_BASE = 70
 local BASE_DEFENSE = PLAYER_LEVEL_BASE * 5
 local ARMOR_CAP_73 = 35880
-local HIT_CAP_BOSS_PERCENT = 9
-local EXPERTISE_SOFT_CAP = 26
-local EXPERTISE_HARD_CAP = 56
 local CRIT_REDUCTION_PER_DEFENSE = 0.04
 local DEFENSE_PER_CRIT_PERCENT = 25
 local DEFENSE_RATING_PER_SKILL_FALLBACK = 2.365
@@ -20,8 +17,8 @@ local EXPERTISE_CR = CR_EXPERTISE or 24
 local SURVIVAL_OF_THE_FITTEST = {33853, 33855, 33856}
 
 local TARGETS = {
-    {level = 73, label = "Boss 73", required = 5.6},
-    {level = 72, label = "Dungeon 72", required = 5.4},
+    {level = 73, label = "Boss 73", required = 5.6, hitCap = 9, expertiseSoftCap = 26, expertiseHardCap = 56},
+    {level = 72, label = "Dungeon 72", required = 5.4, hitCap = 6, expertiseSoftCap = 24, expertiseHardCap = 54},
 }
 
 local COLORS = {
@@ -42,8 +39,8 @@ local L = {
     defRating = "Def rating",
     resRating = "Res rating",
     dodge = "Dodge",
-    miss73 = "Miss 73",
-    avoid73 = "Avoid 73",
+    miss = "Miss",
+    avoid = "Avoid",
     armor = "Armor",
     hit = "Hit",
     expSoft = "Exp soft",
@@ -51,6 +48,7 @@ local L = {
     locked = "locked.",
     unlocked = "unlocked.",
     options = "Options",
+    configTitle = "FUR Options",
     lockWindow = "Lock window",
     startExpanded = "Start expanded",
     showWindow = "Show window",
@@ -66,8 +64,8 @@ if LOCALE == "ptBR" then
         defRating = "Def rating",
         resRating = "Res rating",
         dodge = "Esquiva",
-        miss73 = "Miss 73",
-        avoid73 = "Avoid 73",
+        miss = "Miss",
+        avoid = "Avoid",
         armor = "Armadura",
         hit = "Acerto",
         expSoft = "Exp soft",
@@ -75,6 +73,7 @@ if LOCALE == "ptBR" then
         locked = "travado.",
         unlocked = "destravado.",
         options = "Opcoes",
+        configTitle = "Opcoes do FUR",
         lockWindow = "Travar janela",
         startExpanded = "Iniciar expandido",
         showWindow = "Mostrar janela",
@@ -204,21 +203,32 @@ local function BuildStats()
     local resilienceRating, resilienceReduction = GetResilience()
     local armor = select(2, UnitArmor("player"))
     local dodge = GetDodgeChance and GetDodgeChance() or 0
-    local enemyAttackRating73 = 73 * 5
-    local miss73 = 5 + ((defense - enemyAttackRating73) * CRIT_REDUCTION_PER_DEFENSE)
-    local avoidance73 = dodge + miss73
     local hitRating = GetCombatRating and GetCombatRating(HIT_CR) or 0
     local hitBonus = GetCombatRatingBonus and GetCombatRatingBonus(HIT_CR) or 0
     local hitRatingPerPercent = GetRatingPerPercent(hitRating, hitBonus, HIT_RATING_PER_PERCENT_FALLBACK)
-    local hitCapRating = HIT_CAP_BOSS_PERCENT * hitRatingPerPercent
     local expertiseRating, expertise, expertiseRatingPerPoint = GetExpertiseInfo()
-    local expertiseSoftRating = EXPERTISE_SOFT_CAP * expertiseRatingPerPoint
-    local expertiseHardRating = EXPERTISE_HARD_CAP * expertiseRatingPerPoint
     local talentReduction = GetKnownSotFRank()
     local defenseReduction = math.max(0, (defense - BASE_DEFENSE) * CRIT_REDUCTION_PER_DEFENSE)
     local totalReduction = defenseReduction + resilienceReduction + talentReduction
     local defenseRatingPerSkill = GetDefenseRatingPerSkill(defenseRating, defenseFromGear)
     local resiliencePerPercent = GetResiliencePerPercent(resilienceRating, resilienceReduction)
+    local byTarget = {}
+
+    for index, target in ipairs(TARGETS) do
+        local enemyAttackRating = target.level * 5
+        local miss = 5 + ((defense - enemyAttackRating) * CRIT_REDUCTION_PER_DEFENSE)
+        local hitCapRating = target.hitCap * hitRatingPerPercent
+        local expertiseSoftRating = target.expertiseSoftCap * expertiseRatingPerPoint
+        local expertiseHardRating = target.expertiseHardCap * expertiseRatingPerPoint
+
+        byTarget[index] = {
+            miss = miss,
+            avoidance = dodge + miss,
+            hitDelta = hitRating - hitCapRating,
+            expertiseSoftDelta = expertiseRating - expertiseSoftRating,
+            expertiseHardDelta = expertiseRating - expertiseHardRating,
+        }
+    end
 
     return {
         defense = defense,
@@ -233,14 +243,10 @@ local function BuildStats()
         totalReduction = totalReduction,
         armor = armor or 0,
         dodge = dodge,
-        miss73 = miss73,
-        avoidance73 = avoidance73,
         hitRating = hitRating or 0,
-        hitCapRating = hitCapRating,
         expertiseRating = expertiseRating,
         expertise = expertise,
-        expertiseSoftRating = expertiseSoftRating,
-        expertiseHardRating = expertiseHardRating,
+        byTarget = byTarget,
     }
 end
 
@@ -384,13 +390,13 @@ local function EnsureUI()
 
     FUR.expandedRows = {}
     local expandedInfo = {
-        {"dodge", L.dodge},
-        {"miss73", L.miss73},
-        {"avoidance73", L.avoid73},
-        {"armor", L.armor},
+        {"miss", L.miss},
+        {"avoidance", L.avoid},
         {"hit", L.hit},
         {"expSoft", L.expSoft},
         {"expHard", L.expHard},
+        {"dodge", L.dodge},
+        {"armor", L.armor},
     }
 
     for index, info in ipairs(expandedInfo) do
@@ -404,6 +410,11 @@ local function EnsureUI()
         FUR.expandedRows[#FUR.expandedRows + 1] = row
     end
 
+    FUR.generalSeparator = frame:CreateTexture(nil, "BORDER")
+    FUR.generalSeparator:SetHeight(1)
+    FUR.generalSeparator:SetColorTexture(0.72, 0.62, 0.32, 0.32)
+    FUR.generalSeparator:Hide()
+
     if FURDB.hidden then
         frame:Hide()
     end
@@ -415,7 +426,7 @@ local function LayoutFrame(expanded)
     end
 
     if expanded then
-        FUR.frame:SetSize(195, 164)
+        FUR.frame:SetSize(195, 174)
         MoveCell(FUR.labels.uncrit, 6, -18, 70)
         MoveCell(FUR.labels.defense, 6, -32, 70)
         MoveCell(FUR.labels.resilience, 6, -46, 70)
@@ -428,9 +439,19 @@ local function LayoutFrame(expanded)
 
         for index, row in ipairs(FUR.expandedRows or {}) do
             local y = -66 - ((index - 1) * 13)
+            if index >= 6 then
+                y = y - 8
+            end
             MoveCell(row.label, 6, y, 72)
             MoveCell(row.value, 82, y, 50)
             MoveCell(row.delta, 136, y, 52)
+        end
+
+        if FUR.generalSeparator then
+            FUR.generalSeparator:ClearAllPoints()
+            FUR.generalSeparator:SetPoint("TOPLEFT", FUR.frame, "TOPLEFT", 6, -130)
+            FUR.generalSeparator:SetPoint("TOPRIGHT", FUR.frame, "TOPRIGHT", -6, -130)
+            FUR.generalSeparator:Show()
         end
     else
         FUR.frame:SetSize(124, 56)
@@ -443,6 +464,9 @@ local function LayoutFrame(expanded)
         MoveCell(FUR.cells.defense72, 91, -29, 30)
         MoveCell(FUR.cells.resilience73, 63, -41, 30)
         MoveCell(FUR.cells.resilience72, 91, -41, 30)
+        if FUR.generalSeparator then
+            FUR.generalSeparator:Hide()
+        end
     end
 end
 
@@ -475,28 +499,31 @@ function FUR:Update()
     LayoutFrame(FURDB.expanded)
 
     local expandedValues = {
-        dodge = {value = FormatPercent(stats.dodge)},
-        miss73 = {value = FormatPercent(stats.miss73)},
-        avoidance73 = {value = FormatPercent(stats.avoidance73)},
+        miss = {
+            value = FormatPercent(stats.byTarget[1].miss),
+            delta = FormatPercent(stats.byTarget[2].miss),
+        },
+        avoidance = {
+            value = FormatPercent(stats.byTarget[1].avoidance),
+            delta = FormatPercent(stats.byTarget[2].avoidance),
+        },
+        hit = {
+            value = ColorDelta(stats.byTarget[1].hitDelta, FormatDelta(stats.byTarget[1].hitDelta)),
+            delta = ColorDelta(stats.byTarget[2].hitDelta, FormatDelta(stats.byTarget[2].hitDelta)),
+        },
+        expSoft = {
+            value = ColorDelta(stats.byTarget[1].expertiseSoftDelta, FormatDelta(stats.byTarget[1].expertiseSoftDelta)),
+            delta = ColorDelta(stats.byTarget[2].expertiseSoftDelta, FormatDelta(stats.byTarget[2].expertiseSoftDelta)),
+        },
+        expHard = {
+            value = ColorDelta(stats.byTarget[1].expertiseHardDelta, FormatDelta(stats.byTarget[1].expertiseHardDelta)),
+            delta = ColorDelta(stats.byTarget[2].expertiseHardDelta, FormatDelta(stats.byTarget[2].expertiseHardDelta)),
+        },
+        dodge = {value = FormatPercent(stats.dodge), delta = ""},
         armor = {
             value = tostring(math.floor(stats.armor + 0.5)),
             deltaValue = stats.armor - ARMOR_CAP_73,
             delta = FormatDelta(stats.armor - ARMOR_CAP_73),
-        },
-        hit = {
-            value = tostring(math.floor(stats.hitRating + 0.5)),
-            deltaValue = stats.hitRating - stats.hitCapRating,
-            delta = FormatDelta(stats.hitRating - stats.hitCapRating),
-        },
-        expSoft = {
-            value = tostring(math.floor(stats.expertiseRating + 0.5)),
-            deltaValue = stats.expertiseRating - stats.expertiseSoftRating,
-            delta = FormatDelta(stats.expertiseRating - stats.expertiseSoftRating),
-        },
-        expHard = {
-            value = tostring(math.floor(stats.expertiseRating + 0.5)),
-            deltaValue = stats.expertiseRating - stats.expertiseHardRating,
-            delta = FormatDelta(stats.expertiseRating - stats.expertiseHardRating),
         },
     }
 
@@ -507,8 +534,10 @@ function FUR:Update()
             row.value:Show()
             row.delta:Show()
             row.value:SetText(data.value or "")
-            if data.delta then
+            if data.deltaValue then
                 row.delta:SetText(ColorDelta(data.deltaValue or 0, data.delta))
+            elseif data.delta then
+                row.delta:SetText(data.delta)
             else
                 row.delta:SetText("")
             end
@@ -642,19 +671,24 @@ local function CreateCheckButton(parent, label, x, y, getter, setter)
     return button
 end
 
-local function CreateOptionsPanel()
-    if FUR.optionsPanel then
+local function RefreshConfigControls(controls)
+    if not controls then
         return
     end
 
-    local panel = CreateFrame("Frame", "FUROptionsPanel")
-    panel.name = "FUR"
+    EnsureDb()
+    controls.lockCheck:SetChecked(FURDB.locked)
+    controls.expandedCheck:SetChecked(FURDB.startExpanded)
+    controls.showCheck:SetChecked(not FURDB.hidden)
+    controls.autoHideCheck:SetChecked(FURDB.autoHideCombat)
+    controls.autoMinimizeCheck:SetChecked(FURDB.autoMinimizeCombat)
+end
 
-    local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("FUR - Feral Uncrit Readout")
+local function CreateConfigControls(parent, startY)
+    local y = startY or -52
+    local controls = {}
 
-    local lockCheck = CreateCheckButton(panel, L.lockWindow, 16, -52,
+    controls.lockCheck = CreateCheckButton(parent, L.lockWindow, 16, y,
         function()
             EnsureDb()
             return FURDB.locked
@@ -666,7 +700,7 @@ local function CreateOptionsPanel()
         end
     )
 
-    local expandedCheck = CreateCheckButton(panel, L.startExpanded, 16, -82,
+    controls.expandedCheck = CreateCheckButton(parent, L.startExpanded, 16, y - 30,
         function()
             EnsureDb()
             return FURDB.startExpanded
@@ -679,7 +713,7 @@ local function CreateOptionsPanel()
         end
     )
 
-    local showCheck = CreateCheckButton(panel, L.showWindow, 16, -112,
+    controls.showCheck = CreateCheckButton(parent, L.showWindow, 16, y - 60,
         function()
             EnsureDb()
             return not FURDB.hidden
@@ -698,7 +732,7 @@ local function CreateOptionsPanel()
         end
     )
 
-    local autoHideCheck = CreateCheckButton(panel, L.autoHideCombat, 16, -142,
+    controls.autoHideCheck = CreateCheckButton(parent, L.autoHideCombat, 16, y - 90,
         function()
             EnsureDb()
             return FURDB.autoHideCombat
@@ -709,7 +743,7 @@ local function CreateOptionsPanel()
         end
     )
 
-    local autoMinimizeCheck = CreateCheckButton(panel, L.autoMinimizeCombat, 16, -172,
+    controls.autoMinimizeCheck = CreateCheckButton(parent, L.autoMinimizeCombat, 16, y - 120,
         function()
             EnsureDb()
             return FURDB.autoMinimizeCombat
@@ -720,11 +754,11 @@ local function CreateOptionsPanel()
         end
     )
 
-    local reset = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    reset:SetPoint("TOPLEFT", 20, -210)
-    reset:SetSize(130, 24)
-    reset:SetText(L.resetPosition)
-    reset:SetScript("OnClick", function()
+    controls.reset = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    controls.reset:SetPoint("TOPLEFT", 20, y - 158)
+    controls.reset:SetSize(130, 24)
+    controls.reset:SetText(L.resetPosition)
+    controls.reset:SetScript("OnClick", function()
         EnsureDb()
         MarkUserInteraction()
         FURDB.point = nil
@@ -736,12 +770,26 @@ local function CreateOptionsPanel()
         FUR.frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     end)
 
+    RefreshConfigControls(controls)
+    return controls
+end
+
+local function CreateOptionsPanel()
+    if FUR.optionsPanel then
+        return
+    end
+
+    local panel = CreateFrame("Frame", "FUROptionsPanel")
+    panel.name = "FUR"
+
+    local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 16, -16)
+    title:SetText("FUR - Feral Uncrit Readout")
+
+    panel.configControls = CreateConfigControls(panel, -52)
+
     panel:SetScript("OnShow", function()
-        lockCheck:SetChecked(FURDB and FURDB.locked)
-        expandedCheck:SetChecked(FURDB and FURDB.startExpanded)
-        showCheck:SetChecked(not (FURDB and FURDB.hidden))
-        autoHideCheck:SetChecked(FURDB and FURDB.autoHideCombat)
-        autoMinimizeCheck:SetChecked(FURDB and FURDB.autoMinimizeCombat)
+        RefreshConfigControls(panel.configControls)
     end)
 
     if Settings and Settings.RegisterCanvasLayoutCategory and Settings.RegisterAddOnCategory then
@@ -755,6 +803,79 @@ local function CreateOptionsPanel()
     FUR.optionsPanel = panel
 end
 
+local function SaveConfigFramePosition(frame)
+    EnsureDb()
+    local point, _, relativePoint, x, y = frame:GetPoint(1)
+    FURDB.configPoint = point
+    FURDB.configRelativePoint = relativePoint
+    FURDB.configX = x
+    FURDB.configY = y
+end
+
+local function CreateStandaloneConfig()
+    if FUR.configFrame then
+        return
+    end
+
+    EnsureDb()
+
+    local frame = CreateFrame("Frame", "FURConfigFrame", UIParent, "BackdropTemplate")
+    frame:SetSize(300, 230)
+    frame:SetPoint(FURDB.configPoint or "CENTER", UIParent, FURDB.configRelativePoint or "CENTER", FURDB.configX or 0, FURDB.configY or 0)
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetClampedToScreen(true)
+    frame:SetFrameStrata("DIALOG")
+    frame:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 12,
+        insets = {left = 3, right = 3, top = 3, bottom = 3},
+    })
+    frame:SetBackdropColor(0.03, 0.03, 0.04, 0.92)
+    frame:SetBackdropBorderColor(0.35, 0.33, 0.24, 0.9)
+    frame:SetScript("OnDragStart", function(self)
+        self:StartMoving()
+    end)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        SaveConfigFramePosition(self)
+    end)
+    frame:Hide()
+
+    local header = CreateFrame("Frame", nil, frame)
+    header:SetPoint("TOPLEFT", 4, -4)
+    header:SetPoint("TOPRIGHT", -28, -4)
+    header:SetHeight(30)
+    header:EnableMouse(true)
+    header:RegisterForDrag("LeftButton")
+    header:SetScript("OnDragStart", function()
+        frame:StartMoving()
+    end)
+    header:SetScript("OnDragStop", function()
+        frame:StopMovingOrSizing()
+        SaveConfigFramePosition(frame)
+    end)
+
+    local title = header:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    title:SetPoint("LEFT", 12, 0)
+    title:SetText(L.configTitle)
+
+    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+    close:SetPoint("TOPRIGHT", 1, 1)
+
+    frame.configControls = CreateConfigControls(frame, -48)
+    frame:SetScript("OnShow", function(self)
+        RefreshConfigControls(self.configControls)
+    end)
+
+    tinsert(UISpecialFrames, "FURConfigFrame")
+    FUR.configFrame = frame
+end
+
 local function OpenOptionsPanel()
     CreateOptionsPanel()
     if Settings and Settings.OpenToCategory and FUR.settingsCategory then
@@ -763,6 +884,12 @@ local function OpenOptionsPanel()
         InterfaceOptionsFrame_OpenToCategory(FUR.optionsPanel)
         InterfaceOptionsFrame_OpenToCategory(FUR.optionsPanel)
     end
+end
+
+local function OpenStandaloneConfig()
+    CreateStandaloneConfig()
+    FUR.configFrame:Show()
+    RefreshConfigControls(FUR.configFrame.configControls)
 end
 
 local function SlashHandler(message)
@@ -790,8 +917,10 @@ local function SlashHandler(message)
         SetExpandedByUser(false)
     elseif message == "toggle" then
         SetExpandedByUser(not FURDB.expanded)
-    elseif message == "options" or message == "config" then
+    elseif message == "options" then
         OpenOptionsPanel()
+    elseif message == "config" then
+        OpenStandaloneConfig()
     elseif message == "reset" then
         MarkUserInteraction()
         FURDB.point = nil

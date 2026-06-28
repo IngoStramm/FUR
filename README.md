@@ -15,6 +15,7 @@ The expanded view can also show Dodge, Miss, Avoidance, Armor, Hit, and Expertis
 - Optional auto-hide or auto-minimize in combat.
 - Movable window with lock option.
 - Options panel under Game Options > AddOns > FUR.
+- Standalone movable config window with `/fur config`.
 - English and ptBR labels.
 
 ## Commands
@@ -30,6 +31,7 @@ The expanded view can also show Dodge, Miss, Avoidance, Armor, Hit, and Expertis
 /fur reset
 /fur debug
 /fur options
+/fur config
 ```
 
 ## Installation
