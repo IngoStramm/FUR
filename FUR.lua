@@ -48,7 +48,6 @@ local L = {
     locked = "locked.",
     unlocked = "unlocked.",
     options = "Options",
-    configTitle = "FUR Options",
     lockWindow = "Lock window",
     startExpanded = "Start expanded",
     showWindow = "Show window",
@@ -73,7 +72,6 @@ if LOCALE == "ptBR" then
         locked = "travado.",
         unlocked = "destravado.",
         options = "Opcoes",
-        configTitle = "Opcoes do FUR",
         lockWindow = "Travar janela",
         startExpanded = "Iniciar expandido",
         showWindow = "Mostrar janela",
@@ -819,24 +817,31 @@ local function CreateStandaloneConfig()
 
     EnsureDb()
 
-    local frame = CreateFrame("Frame", "FURConfigFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(300, 230)
+    local ok, frame = pcall(CreateFrame, "Frame", "FURConfigFrame", UIParent, "BasicFrameTemplateWithInset")
+    if not ok then
+        frame = CreateFrame("Frame", "FURConfigFrame", UIParent, "BackdropTemplate")
+        frame:SetBackdrop({
+            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true,
+            tileSize = 16,
+            edgeSize = 12,
+            insets = {left = 3, right = 3, top = 3, bottom = 3},
+        })
+        frame:SetBackdropColor(0.03, 0.03, 0.04, 0.92)
+        frame:SetBackdropBorderColor(0.35, 0.33, 0.24, 0.9)
+        local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
+        close:SetPoint("TOPRIGHT", 1, 1)
+    end
+
+    frame:SetSize(360, 280)
     frame:SetPoint(FURDB.configPoint or "CENTER", UIParent, FURDB.configRelativePoint or "CENTER", FURDB.configX or 0, FURDB.configY or 0)
     frame:SetMovable(true)
     frame:EnableMouse(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetClampedToScreen(true)
-    frame:SetFrameStrata("DIALOG")
-    frame:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true,
-        tileSize = 16,
-        edgeSize = 12,
-        insets = {left = 3, right = 3, top = 3, bottom = 3},
-    })
-    frame:SetBackdropColor(0.03, 0.03, 0.04, 0.92)
-    frame:SetBackdropBorderColor(0.35, 0.33, 0.24, 0.9)
+    frame:SetFrameStrata("FULLSCREEN_DIALOG")
+    frame:SetToplevel(true)
     frame:SetScript("OnDragStart", function(self)
         self:StartMoving()
     end)
@@ -846,33 +851,27 @@ local function CreateStandaloneConfig()
     end)
     frame:Hide()
 
-    local header = CreateFrame("Frame", nil, frame)
-    header:SetPoint("TOPLEFT", 4, -4)
-    header:SetPoint("TOPRIGHT", -28, -4)
-    header:SetHeight(30)
-    header:EnableMouse(true)
-    header:RegisterForDrag("LeftButton")
-    header:SetScript("OnDragStart", function()
-        frame:StartMoving()
-    end)
-    header:SetScript("OnDragStop", function()
-        frame:StopMovingOrSizing()
-        SaveConfigFramePosition(frame)
-    end)
+    local title = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    title:SetPoint("TOP", frame, "TOP", 0, -6)
+    title:SetText("FUR")
 
-    local title = header:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    title:SetPoint("LEFT", 12, 0)
-    title:SetText(L.configTitle)
+    local content = CreateFrame("Frame", nil, frame)
+    content:SetPoint("TOPLEFT", frame, "TOPLEFT", 16, -32)
+    content:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -16, 16)
+    frame.content = content
 
-    local close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-    close:SetPoint("TOPRIGHT", 1, 1)
+    local contentTitle = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
+    contentTitle:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -4)
+    contentTitle:SetText("FUR - Feral Uncrit Readout")
 
-    frame.configControls = CreateConfigControls(frame, -48)
+    frame.configControls = CreateConfigControls(content, -38)
     frame:SetScript("OnShow", function(self)
         RefreshConfigControls(self.configControls)
     end)
 
-    tinsert(UISpecialFrames, "FURConfigFrame")
+    if UISpecialFrames then
+        UISpecialFrames[#UISpecialFrames + 1] = "FURConfigFrame"
+    end
     FUR.configFrame = frame
 end
 

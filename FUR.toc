@@ -3,7 +3,7 @@
 ## Notes: Shows feral tank crit immunity status against level 72 and 73 mobs.
 ## Notes-ptBR: Mostra se seu druida feral tank esta imune a critico contra mobs nivel 72 e 73.
 ## Author: Ingo Stramm
-## Version: 1.0.1
+## Version: 1.0.2
 ## SavedVariablesPerCharacter: FURDB
 ## DefaultState: enabled
 
