@@ -1,5 +1,9 @@
 # FUR - Feral Uncrit Readout
 
+<p>
+  <img src="assets/fur-icon.png" width="128" alt="FUR addon icon">
+</p>
+
 FUR is a compact World of Warcraft addon for level 70 feral druid tanks on the Anniversary Burning Crusade client.
 
 It shows whether your currently equipped gear is crit immune against level 73 boss mobs and level 72 dungeon mobs. The compact view shows how much Defense Rating or Resilience Rating you can lose, or how much you still need, to reach crit immunity.
@@ -16,7 +20,7 @@ The expanded view can also show Dodge, Miss, Avoidance, Armor, Hit, and Expertis
 - Movable window with lock option.
 - Options panel under Game Options > AddOns > FUR.
 - Standalone movable config window with `/fur config`.
-- English and ptBR labels.
+- Localized UI text for all WoW-supported client locales.
 
 ## Commands
 
@@ -60,3 +64,7 @@ Do not use GitHub's green **Code > Download ZIP** button for installation. That 
 ## Notes
 
 FUR uses in-game APIs such as `UnitDefense`, `GetCombatRating`, `GetCombatRatingBonus`, `GetDodgeChance`, and `GetExpertise` where available. Rating equivalents are rounded upward when fractional.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).

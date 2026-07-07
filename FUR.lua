@@ -17,8 +17,8 @@ local EXPERTISE_CR = CR_EXPERTISE or 24
 local SURVIVAL_OF_THE_FITTEST = {33853, 33855, 33856}
 
 local TARGETS = {
-    {level = 73, label = "Boss 73", required = 5.6, hitCap = 9, expertiseSoftCap = 26, expertiseHardCap = 56},
-    {level = 72, label = "Dungeon 72", required = 5.4, hitCap = 6, expertiseSoftCap = 24, expertiseHardCap = 54},
+    {level = 73, labelKey = "targetBoss73", required = 5.6, hitCap = 9, expertiseSoftCap = 26, expertiseHardCap = 56},
+    {level = 72, labelKey = "targetDungeon72", required = 5.4, hitCap = 6, expertiseSoftCap = 24, expertiseHardCap = 54},
 }
 
 local COLORS = {
@@ -33,31 +33,44 @@ local COLORS = {
 local LABEL_COLOR = {0.82, 0.82, 0.74}
 
 local LOCALE = GetLocale and GetLocale() or "enUS"
-local L = {
-    title = "FUR:",
-    uncrit = "Uncrit",
-    defRating = "Def rating",
-    resRating = "Res rating",
-    dodge = "Dodge",
-    miss = "Miss",
-    avoid = "Avoid",
-    armor = "Armor",
-    hit = "Hit",
-    expSoft = "Exp soft",
-    expHard = "Exp hard",
-    locked = "locked.",
-    unlocked = "unlocked.",
-    options = "Options",
-    lockWindow = "Lock window",
-    startExpanded = "Start expanded",
-    showWindow = "Show window",
-    autoHideCombat = "Auto hide in combat",
-    autoMinimizeCombat = "Auto minimize in combat",
-    resetPosition = "Reset position",
-}
 
-if LOCALE == "ptBR" then
-    L = {
+local LOCALES = {
+    enUS = {
+        title = "FUR:",
+        uncrit = "Uncrit",
+        defRating = "Def rating",
+        resRating = "Res rating",
+        dodge = "Dodge",
+        miss = "Miss",
+        avoid = "Avoid",
+        armor = "Armor",
+        hit = "Hit",
+        expSoft = "Exp soft",
+        expHard = "Exp hard",
+        locked = "locked.",
+        unlocked = "unlocked.",
+        options = "Options",
+        addonLong = "Feral Uncrit Readout",
+        targetBoss73 = "Boss 73",
+        targetDungeon72 = "Dungeon 72",
+        lockWindow = "Lock window",
+        startExpanded = "Start expanded",
+        showWindow = "Show window",
+        autoHideCombat = "Auto hide in combat",
+        autoMinimizeCombat = "Auto minimize in combat",
+        resetPosition = "Reset position",
+        statusTotal = "total anti-crit",
+        statusSafe = "%s%s%s: immune, %.2f%% extra (%s defense rating / %s resilience rating)",
+        statusMissing = "%s%s%s: missing %.2f%% (%s defense rating or %s resilience rating)",
+        debugTitle = "FUR debug",
+        debugDefense = "Defense total: %d | above %d: %s | reduction: %.2f%%",
+        debugRatings = "Defense rating: %.0f | Resilience rating: %.0f | resilience reduction: %.2f%% | rating per 1%%: %.2f",
+        debugDefensePerSkill = "Defense rating per 1 defense skill: %.2f",
+        debugTalent = "Survival of the Fittest: %d/3 | talent reduction: %.0f%%",
+        debugTotal = "Total anti-crit: %.2f%%",
+        debugTarget = "Level %d requires %.2f%% | delta %.2f%% | defense equiv. %s | resilience equiv. %s",
+    },
+    ptBR = {
         title = "FUR:",
         uncrit = "Uncrit",
         defRating = "Def rating",
@@ -72,14 +85,340 @@ if LOCALE == "ptBR" then
         locked = "travado.",
         unlocked = "destravado.",
         options = "Opcoes",
+        addonLong = "Leitura de Crit Imune Feral",
+        targetBoss73 = "Boss 73",
+        targetDungeon72 = "Dungeon 72",
         lockWindow = "Travar janela",
         startExpanded = "Iniciar expandido",
         showWindow = "Mostrar janela",
         autoHideCombat = "Auto ocultar em combate",
         autoMinimizeCombat = "Auto minimizar em combate",
         resetPosition = "Resetar posicao",
-    }
+        statusTotal = "anti-crit total",
+        statusSafe = "%s%s%s: imune, sobra %.2f%% (%s defense rating / %s resilience rating)",
+        statusMissing = "%s%s%s: falta %.2f%% (%s defense rating ou %s resilience rating)",
+        debugTitle = "FUR debug",
+        debugDefense = "Defense total: %d | acima de %d: %s | reducao: %.2f%%",
+        debugRatings = "Defense rating: %.0f | Resilience rating: %.0f | reducao resilience: %.2f%% | rating por 1%%: %.2f",
+        debugDefensePerSkill = "Defense rating por 1 defense skill: %.2f",
+        debugTalent = "Survival of the Fittest: %d/3 | reducao talento: %.0f%%",
+        debugTotal = "Total anti-crit: %.2f%%",
+        debugTarget = "Nivel %d requer %.2f%% | delta %.2f%% | equiv. defense %s | equiv. resilience %s",
+    },
+    deDE = {
+        uncrit = "Krit-sicher",
+        defRating = "Def-Wert.",
+        resRating = "Abh.-Wert.",
+        dodge = "Ausw.",
+        avoid = "Vermeiden",
+        armor = "Ruestung",
+        hit = "Treffer",
+        expSoft = "Wk soft",
+        expHard = "Wk hard",
+        locked = "gesperrt.",
+        unlocked = "entsperrt.",
+        options = "Optionen",
+        addonLong = "Wilder Kritimmunitaets-Status",
+        targetBoss73 = "Boss 73",
+        targetDungeon72 = "Dungeon 72",
+        lockWindow = "Fenster sperren",
+        startExpanded = "Erweitert starten",
+        showWindow = "Fenster anzeigen",
+        autoHideCombat = "Im Kampf automatisch ausblenden",
+        autoMinimizeCombat = "Im Kampf automatisch minimieren",
+        resetPosition = "Position zuruecksetzen",
+        statusTotal = "Gesamte Kritvermeidung",
+        statusSafe = "%s%s%s: immun, %.2f%% uebrig (%s Verteidigungswertung / %s Abhaertung)",
+        statusMissing = "%s%s%s: %.2f%% fehlt (%s Verteidigungswertung oder %s Abhaertung)",
+        debugTitle = "FUR-Debug",
+        debugDefense = "Verteidigung gesamt: %d | ueber %d: %s | Reduktion: %.2f%%",
+        debugRatings = "Verteidigungswertung: %.0f | Abhaertung: %.0f | Abhaertungsreduktion: %.2f%% | Wertung pro 1%%: %.2f",
+        debugDefensePerSkill = "Verteidigungswertung pro 1 Verteidigung: %.2f",
+        debugTalent = "Ueberleben der Staerksten: %d/3 | Talentreduktion: %.0f%%",
+        debugTotal = "Gesamte Kritvermeidung: %.2f%%",
+        debugTarget = "Stufe %d benoetigt %.2f%% | Delta %.2f%% | Verteidigung aequiv. %s | Abhaertung aequiv. %s",
+    },
+    esES = {
+        uncrit = "Sin crit",
+        defRating = "Defensa",
+        resRating = "Temple",
+        dodge = "Esquiva",
+        avoid = "Evitar",
+        armor = "Armadura",
+        hit = "Golpe",
+        expSoft = "Per. soft",
+        expHard = "Per. hard",
+        locked = "bloqueada.",
+        unlocked = "desbloqueada.",
+        options = "Opciones",
+        addonLong = "Lectura de inmunidad a critico feral",
+        targetBoss73 = "Jefe 73",
+        targetDungeon72 = "Mazmorra 72",
+        lockWindow = "Bloquear ventana",
+        startExpanded = "Iniciar expandido",
+        showWindow = "Mostrar ventana",
+        autoHideCombat = "Ocultar automaticamente en combate",
+        autoMinimizeCombat = "Minimizar automaticamente en combate",
+        resetPosition = "Restablecer posicion",
+        statusTotal = "anti-critico total",
+        statusSafe = "%s%s%s: inmune, sobra %.2f%% (%s indice de defensa / %s indice de temple)",
+        statusMissing = "%s%s%s: falta %.2f%% (%s indice de defensa o %s indice de temple)",
+        debugTitle = "Depuracion FUR",
+        debugDefense = "Defensa total: %d | por encima de %d: %s | reduccion: %.2f%%",
+        debugRatings = "Indice de defensa: %.0f | Indice de temple: %.0f | reduccion por temple: %.2f%% | indice por 1%%: %.2f",
+        debugDefensePerSkill = "Indice de defensa por 1 p. de defensa: %.2f",
+        debugTalent = "Supervivencia del mas fuerte: %d/3 | reduccion por talento: %.0f%%",
+        debugTotal = "Anti-critico total: %.2f%%",
+        debugTarget = "Nivel %d requiere %.2f%% | delta %.2f%% | equiv. defensa %s | equiv. temple %s",
+    },
+    esMX = {
+        uncrit = "Sin crit",
+        defRating = "Defensa",
+        resRating = "Temple",
+        dodge = "Esquiva",
+        avoid = "Evitar",
+        armor = "Armadura",
+        hit = "Golpe",
+        expSoft = "Per. soft",
+        expHard = "Per. hard",
+        locked = "bloqueada.",
+        unlocked = "desbloqueada.",
+        options = "Opciones",
+        addonLong = "Lectura de inmunidad a critico feral",
+        targetBoss73 = "Jefe 73",
+        targetDungeon72 = "Calabozo 72",
+        lockWindow = "Bloquear ventana",
+        startExpanded = "Iniciar expandido",
+        showWindow = "Mostrar ventana",
+        autoHideCombat = "Ocultar automaticamente en combate",
+        autoMinimizeCombat = "Minimizar automaticamente en combate",
+        resetPosition = "Restablecer posicion",
+        statusTotal = "anti-critico total",
+        statusSafe = "%s%s%s: inmune, sobra %.2f%% (%s indice de defensa / %s indice de temple)",
+        statusMissing = "%s%s%s: falta %.2f%% (%s indice de defensa o %s indice de temple)",
+        debugTitle = "Depuracion FUR",
+        debugDefense = "Defensa total: %d | por encima de %d: %s | reduccion: %.2f%%",
+        debugRatings = "Indice de defensa: %.0f | Indice de temple: %.0f | reduccion por temple: %.2f%% | indice por 1%%: %.2f",
+        debugDefensePerSkill = "Indice de defensa por 1 p. de defensa: %.2f",
+        debugTalent = "Supervivencia del mas fuerte: %d/3 | reduccion por talento: %.0f%%",
+        debugTotal = "Anti-critico total: %.2f%%",
+        debugTarget = "Nivel %d requiere %.2f%% | delta %.2f%% | equiv. defensa %s | equiv. temple %s",
+    },
+    frFR = {
+        uncrit = "Incrit.",
+        defRating = "Def.",
+        resRating = "Resil.",
+        dodge = "Esq.",
+        avoid = "Evit.",
+        armor = "Armure",
+        hit = "Toucher",
+        expSoft = "Exp soft",
+        expHard = "Exp hard",
+        locked = "verrouillee.",
+        unlocked = "deverrouillee.",
+        options = "Options",
+        addonLong = "Lecture d'immunite critique ferale",
+        targetBoss73 = "Boss 73",
+        targetDungeon72 = "Donjon 72",
+        lockWindow = "Verrouiller la fenetre",
+        startExpanded = "Demarrer etendu",
+        showWindow = "Afficher la fenetre",
+        autoHideCombat = "Masquer automatiquement en combat",
+        autoMinimizeCombat = "Reduire automatiquement en combat",
+        resetPosition = "Reinitialiser la position",
+        statusTotal = "anti-critique total",
+        statusSafe = "%s%s%s: immunise, %.2f%% en plus (%s score de defense / %s score de resilience)",
+        statusMissing = "%s%s%s: manque %.2f%% (%s score de defense ou %s score de resilience)",
+        debugTitle = "Debug FUR",
+        debugDefense = "Defense totale : %d | au-dessus de %d : %s | reduction : %.2f%%",
+        debugRatings = "Score de defense : %.0f | Score de resilience : %.0f | reduction resilience : %.2f%% | score par 1%% : %.2f",
+        debugDefensePerSkill = "Score de defense par 1 point de defense : %.2f",
+        debugTalent = "Survie du plus apte : %d/3 | reduction talent : %.0f%%",
+        debugTotal = "Anti-critique total : %.2f%%",
+        debugTarget = "Niveau %d requiert %.2f%% | delta %.2f%% | equiv. defense %s | equiv. resilience %s",
+    },
+    itIT = {
+        uncrit = "No crit",
+        defRating = "Difesa",
+        resRating = "Tempra",
+        dodge = "Schiv.",
+        avoid = "Evita",
+        armor = "Armatura",
+        hit = "Colpo",
+        expSoft = "Per. soft",
+        expHard = "Per. hard",
+        locked = "bloccata.",
+        unlocked = "sbloccata.",
+        options = "Opzioni",
+        addonLong = "Lettura immunita ai critici feral",
+        targetBoss73 = "Boss 73",
+        targetDungeon72 = "Spedizione 72",
+        lockWindow = "Blocca finestra",
+        startExpanded = "Avvia espanso",
+        showWindow = "Mostra finestra",
+        autoHideCombat = "Nascondi automaticamente in combattimento",
+        autoMinimizeCombat = "Minimizza automaticamente in combattimento",
+        resetPosition = "Ripristina posizione",
+        statusTotal = "anti-critico totale",
+        statusSafe = "%s%s%s: immune, %.2f%% extra (%s indice difesa / %s indice tempra)",
+        statusMissing = "%s%s%s: manca %.2f%% (%s indice difesa o %s indice tempra)",
+        debugTitle = "Debug FUR",
+        debugDefense = "Difesa totale: %d | sopra %d: %s | riduzione: %.2f%%",
+        debugRatings = "Indice difesa: %.0f | Indice tempra: %.0f | riduzione tempra: %.2f%% | indice per 1%%: %.2f",
+        debugDefensePerSkill = "Indice difesa per 1 abilita difesa: %.2f",
+        debugTalent = "Sopravvivenza del Piu Forte: %d/3 | riduzione talento: %.0f%%",
+        debugTotal = "Anti-critico totale: %.2f%%",
+        debugTarget = "Livello %d richiede %.2f%% | delta %.2f%% | equiv. difesa %s | equiv. tempra %s",
+    },
+    koKR = {
+        uncrit = "치명면역",
+        defRating = "방숙",
+        resRating = "탄력",
+        dodge = "회피",
+        miss = "빗맞음",
+        avoid = "방어합",
+        armor = "방어도",
+        hit = "적중",
+        expSoft = "숙련S",
+        expHard = "숙련H",
+        locked = "잠김.",
+        unlocked = "잠금 해제.",
+        options = "설정",
+        addonLong = "야성 치명타 면역 표시",
+        targetBoss73 = "보스 73",
+        targetDungeon72 = "던전 72",
+        lockWindow = "창 잠금",
+        startExpanded = "확장 상태로 시작",
+        showWindow = "창 표시",
+        autoHideCombat = "전투 중 자동 숨김",
+        autoMinimizeCombat = "전투 중 자동 최소화",
+        resetPosition = "위치 초기화",
+        statusTotal = "총 치명타 감소",
+        statusSafe = "%s%s%s: 면역, %.2f%% 초과 (%s 방어 숙련도 / %s 탄력도)",
+        statusMissing = "%s%s%s: %.2f%% 부족 (%s 방어 숙련도 또는 %s 탄력도)",
+        debugTitle = "FUR 디버그",
+        debugDefense = "총 방어 숙련: %d | %d 초과: %s | 감소: %.2f%%",
+        debugRatings = "방어 숙련도: %.0f | 탄력도: %.0f | 탄력 감소: %.2f%% | 1%%당 평점: %.2f",
+        debugDefensePerSkill = "방어 숙련 1당 방어 숙련도: %.2f",
+        debugTalent = "적자생존: %d/3 | 특성 감소: %.0f%%",
+        debugTotal = "총 치명타 감소: %.2f%%",
+        debugTarget = "%d 레벨 필요 %.2f%% | 차이 %.2f%% | 방어 숙련도 환산 %s | 탄력도 환산 %s",
+    },
+    ruRU = {
+        uncrit = "Без крит.",
+        defRating = "Защ.",
+        resRating = "Уст.",
+        dodge = "Уклон.",
+        miss = "Промах",
+        avoid = "Избеж.",
+        armor = "Броня",
+        hit = "Метк.",
+        expSoft = "Маст. soft",
+        expHard = "Маст. hard",
+        locked = "закреплено.",
+        unlocked = "откреплено.",
+        options = "Настройки",
+        addonLong = "Статус защиты от критов для ферала",
+        targetBoss73 = "Босс 73",
+        targetDungeon72 = "Подземелье 72",
+        lockWindow = "Закрепить окно",
+        startExpanded = "Запускать раскрытым",
+        showWindow = "Показывать окно",
+        autoHideCombat = "Скрывать в бою",
+        autoMinimizeCombat = "Сворачивать в бою",
+        resetPosition = "Сбросить позицию",
+        statusTotal = "общая защита от критов",
+        statusSafe = "%s%s%s: иммунитет, запас %.2f%% (%s рейтинга защиты / %s устойчивости)",
+        statusMissing = "%s%s%s: не хватает %.2f%% (%s рейтинга защиты или %s устойчивости)",
+        debugTitle = "Отладка FUR",
+        debugDefense = "Защита всего: %d | выше %d: %s | снижение: %.2f%%",
+        debugRatings = "Рейтинг защиты: %.0f | Устойчивость: %.0f | снижение устойчивости: %.2f%% | рейтинг за 1%%: %.2f",
+        debugDefensePerSkill = "Рейтинг защиты за 1 навык защиты: %.2f",
+        debugTalent = "Выживание сильнейших: %d/3 | снижение таланта: %.0f%%",
+        debugTotal = "Общая защита от критов: %.2f%%",
+        debugTarget = "Уровень %d требует %.2f%% | разница %.2f%% | экв. защиты %s | экв. устойчивости %s",
+    },
+    zhCN = {
+        uncrit = "免暴",
+        defRating = "防等",
+        resRating = "韧性",
+        dodge = "躲闪",
+        miss = "未命",
+        avoid = "规避",
+        armor = "护甲",
+        hit = "命中",
+        expSoft = "精准S",
+        expHard = "精准H",
+        locked = "已锁定。",
+        unlocked = "已解锁。",
+        options = "选项",
+        addonLong = "野德免暴状态",
+        targetBoss73 = "首领 73",
+        targetDungeon72 = "地下城 72",
+        lockWindow = "锁定窗口",
+        startExpanded = "启动时展开",
+        showWindow = "显示窗口",
+        autoHideCombat = "战斗中自动隐藏",
+        autoMinimizeCombat = "战斗中自动最小化",
+        resetPosition = "重置位置",
+        statusTotal = "总免暴",
+        statusSafe = "%s%s%s：已免暴，多出 %.2f%%（%s 防御等级 / %s 韧性等级）",
+        statusMissing = "%s%s%s：缺少 %.2f%%（%s 防御等级或 %s 韧性等级）",
+        debugTitle = "FUR 调试",
+        debugDefense = "防御总值：%d | 高于 %d：%s | 降低：%.2f%%",
+        debugRatings = "防御等级：%.0f | 韧性等级：%.0f | 韧性降低：%.2f%% | 每 1%% 等级：%.2f",
+        debugDefensePerSkill = "每 1 点防御技能的防御等级：%.2f",
+        debugTalent = "适者生存：%d/3 | 天赋降低：%.0f%%",
+        debugTotal = "总免暴：%.2f%%",
+        debugTarget = "%d 级需要 %.2f%% | 差值 %.2f%% | 防御等效 %s | 韧性等效 %s",
+    },
+    zhTW = {
+        uncrit = "免暴",
+        defRating = "防等",
+        resRating = "韌性",
+        dodge = "閃躲",
+        miss = "未命",
+        avoid = "規避",
+        armor = "護甲",
+        hit = "命中",
+        expSoft = "精準S",
+        expHard = "精準H",
+        locked = "已鎖定。",
+        unlocked = "已解鎖。",
+        options = "選項",
+        addonLong = "野德免暴狀態",
+        targetBoss73 = "首領 73",
+        targetDungeon72 = "地城 72",
+        lockWindow = "鎖定視窗",
+        startExpanded = "啟動時展開",
+        showWindow = "顯示視窗",
+        autoHideCombat = "戰鬥中自動隱藏",
+        autoMinimizeCombat = "戰鬥中自動最小化",
+        resetPosition = "重設位置",
+        statusTotal = "總免暴",
+        statusSafe = "%s%s%s：已免暴，多出 %.2f%%（%s 防禦等級 / %s 韌性等級）",
+        statusMissing = "%s%s%s：缺少 %.2f%%（%s 防禦等級或 %s 韌性等級）",
+        debugTitle = "FUR 除錯",
+        debugDefense = "防禦總值：%d | 高於 %d：%s | 降低：%.2f%%",
+        debugRatings = "防禦等級：%.0f | 韌性等級：%.0f | 韌性降低：%.2f%% | 每 1%% 等級：%.2f",
+        debugDefensePerSkill = "每 1 點防禦技能的防禦等級：%.2f",
+        debugTalent = "適者生存：%d/3 | 天賦降低：%.0f%%",
+        debugTotal = "總免暴：%.2f%%",
+        debugTarget = "%d 級需要 %.2f%% | 差值 %.2f%% | 防禦等效 %s | 韌性等效 %s",
+    },
+}
+
+LOCALES.enGB = LOCALES.enUS
+
+local function GetLocalizedStrings(locale)
+    local strings = LOCALES[locale] or LOCALES.enUS
+    if strings ~= LOCALES.enUS then
+        setmetatable(strings, { __index = LOCALES.enUS })
+    end
+    return strings
 end
+
+local L = GetLocalizedStrings(LOCALE)
 
 local function ColorText(text, ok)
     return (ok and COLORS.green or COLORS.red) .. text .. COLORS.reset
@@ -549,47 +888,48 @@ end
 
 function FUR:PrintStatus()
     local stats = BuildStats()
-    print(COLORS.yellow .. "FUR" .. COLORS.reset .. ": anti-crit total " .. Round(stats.totalReduction, 2) .. "%")
+    print(COLORS.yellow .. "FUR" .. COLORS.reset .. ": " .. L.statusTotal .. " " .. Round(stats.totalReduction, 2) .. "%")
     for _, target in ipairs(TARGETS) do
+        local targetLabel = L[target.labelKey] or tostring(target.level)
         local delta = stats.totalReduction - target.required
         local absDelta = math.abs(delta)
         local defenseEquivalent = absDelta * DEFENSE_PER_CRIT_PERCENT * stats.defenseRatingPerSkill
         local resilienceEquivalent = absDelta * stats.resiliencePerPercent
         if delta >= -0.0001 then
-            print(string.format("%s%s%s: imune, sobra %.2f%% (%s defense rating / %s resilience rating)",
-                COLORS.green, target.label, COLORS.reset, absDelta, FormatConservativeRating(defenseEquivalent), FormatConservativeRating(resilienceEquivalent)))
+            print(string.format(L.statusSafe,
+                COLORS.green, targetLabel, COLORS.reset, absDelta, FormatConservativeRating(defenseEquivalent), FormatConservativeRating(resilienceEquivalent)))
         else
-            print(string.format("%s%s%s: falta %.2f%% (%s defense rating ou %s resilience rating)",
-                COLORS.red, target.label, COLORS.reset, absDelta, FormatConservativeRating(-defenseEquivalent), FormatConservativeRating(-resilienceEquivalent)))
+            print(string.format(L.statusMissing,
+                COLORS.red, targetLabel, COLORS.reset, absDelta, FormatConservativeRating(-defenseEquivalent), FormatConservativeRating(-resilienceEquivalent)))
         end
     end
 end
 
 function FUR:PrintDebug()
     local stats = BuildStats()
-    print(COLORS.yellow .. "FUR debug" .. COLORS.reset)
-    print(string.format("Defense total: %d | acima de %d: %s | reducao: %.2f%%",
+    print(COLORS.yellow .. L.debugTitle .. COLORS.reset)
+    print(string.format(L.debugDefense,
         stats.defense,
         BASE_DEFENSE,
         FormatSigned(stats.defense - BASE_DEFENSE, 0),
         stats.defenseReduction
     ))
-    print(string.format("Defense rating: %.0f | Resilience rating: %.0f | reducao resilience: %.2f%% | rating por 1%%: %.2f",
+    print(string.format(L.debugRatings,
         stats.defenseRating,
         stats.resilienceRating,
         stats.resilienceReduction,
         stats.resiliencePerPercent
     ))
-    print(string.format("Defense rating por 1 defense skill: %.2f", stats.defenseRatingPerSkill))
-    print(string.format("Survival of the Fittest: %d/3 | reducao talento: %.0f%%",
+    print(string.format(L.debugDefensePerSkill, stats.defenseRatingPerSkill))
+    print(string.format(L.debugTalent,
         stats.talentReduction,
         stats.talentReduction
     ))
-    print(string.format("Total anti-crit: %.2f%%", stats.totalReduction))
+    print(string.format(L.debugTotal, stats.totalReduction))
 
     for _, target in ipairs(TARGETS) do
         local delta = stats.totalReduction - target.required
-        print(string.format("Nivel %d requer %.2f%% | delta %.2f%% | equiv. defense %s | equiv. resilience %s",
+        print(string.format(L.debugTarget,
             target.level,
             target.required,
             delta,
@@ -782,7 +1122,7 @@ local function CreateOptionsPanel()
 
     local title = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("FUR - Feral Uncrit Readout")
+    title:SetText("FUR - " .. L.addonLong)
 
     panel.configControls = CreateConfigControls(panel, -52)
 
@@ -862,7 +1202,7 @@ local function CreateStandaloneConfig()
 
     local contentTitle = content:CreateFontString(nil, "ARTWORK", "GameFontHighlightLarge")
     contentTitle:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -4)
-    contentTitle:SetText("FUR - Feral Uncrit Readout")
+    contentTitle:SetText("FUR - " .. L.addonLong)
 
     frame.configControls = CreateConfigControls(content, -38)
     frame:SetScript("OnShow", function(self)

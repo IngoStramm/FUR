@@ -36,3 +36,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: FUR.zip
+          body_path: CHANGELOG.md

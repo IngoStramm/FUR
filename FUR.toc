@@ -2,8 +2,18 @@
 ## Title: FUR - Feral Uncrit Readout
 ## Notes: Shows feral tank crit immunity status against level 72 and 73 mobs.
 ## Notes-ptBR: Mostra se seu druida feral tank esta imune a critico contra mobs nivel 72 e 73.
+## Notes-deDE: Zeigt die Kritimmunitaet deines wilden Druidentanks gegen Gegner der Stufen 72 und 73.
+## Notes-esES: Muestra si tu druida feral tanque es inmune a criticos contra enemigos de nivel 72 y 73.
+## Notes-esMX: Muestra si tu druida feral tanque es inmune a criticos contra enemigos de nivel 72 y 73.
+## Notes-frFR: Affiche si votre druide farouche tank est immunise aux critiques contre les ennemis de niveaux 72 et 73.
+## Notes-itIT: Mostra se il tuo druido feral tank e immune ai critici contro nemici di livello 72 e 73.
+## Notes-koKR: 72 및 73 레벨 적을 상대로 야성 드루이드 탱커의 치명타 면역 상태를 표시합니다.
+## Notes-ruRU: Показывает иммунитет к критическим ударам для танка-друида против противников 72 и 73 уровней.
+## Notes-zhCN: 显示野性德鲁伊坦克对 72 和 73 级敌人的免暴状态。
+## Notes-zhTW: 顯示野性德魯伊坦克面對 72 和 73 級敵人的免暴狀態。
 ## Author: Ingo Stramm
-## Version: 1.0.2
+## Version: 1.0.3
+## X-Curse-Project-ID: 1601485
 ## SavedVariablesPerCharacter: FURDB
 ## DefaultState: enabled
 
