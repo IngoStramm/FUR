@@ -58,8 +58,8 @@ Do not use GitHub's green **Code > Download ZIP** button for installation. That 
 
 ## Compatibility
 
-- Interface: `20505`
-- Target client: World of Warcraft Anniversary / Burning Crusade Classic
+- Interface: `20506`
+- Target client: World of Warcraft Anniversary / Burning Crusade Classic 2.5.6
 
 ## Notes
 

@@ -1,7 +1,4 @@
-## 1.0.3
+## 1.0.4
 
-- Added localized UI text for all WoW-supported client locales.
-- Added localized addon notes for CurseForge and the in-game addon list.
-- Added CurseForge packaging metadata with project ID 1601485.
-- Added Markdown changelog support for GitHub and CurseForge releases.
-- Added a project icon asset for CurseForge.
+- Updated the TOC Interface version to `20506` for World of Warcraft Anniversary / Burning Crusade Classic 2.5.6.
+- No addon behavior changes from 1.0.3.
